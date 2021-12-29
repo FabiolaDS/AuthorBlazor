@@ -1,0 +1,128 @@
+﻿@page "/books"
+@using AuthorBlazor.Service
+@using AuthorBlazor.Model
+@inject IAuthorService _authorService
+@inject IBookService _bookService
+<h3>Books</h3>
+
+<div class="d-flex justify-content-end">
+    <input
+        placeholder="Search by book title"
+        class=" mr 3"
+        type="text"
+        @onchange="@UpdateBookFilter"/>
+    <input
+        placeholder="Search by author"
+        type="text"
+        @oninput="@UpdateAuthorFilter"/>
+</div>
+
+
+@if (_authors == null)
+{
+    <p>
+        <em> Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Isbn </th>
+            <th> Title</th>
+            <th>Author </th>
+            <th>Publication </th>
+            <th>Nbre of pages </th>
+            <th>Genre </th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @foreach (var author in _authors)
+        {
+            @foreach (var book in author.Books)
+            {
+                @if (Filter(author, book))
+                {
+                    <tr>
+                        <td>@book.ISBN</td>
+                        <td>@book.Title</td>
+                        <td>@author.FirstName @author.LastName</td>
+                        <td>@book.PublicationYear</td>
+                        <td>@book.NumOfPages</td>
+                        <td>@book.Genre</td>
+                        <td >
+                            <button class="btn-danger " @onclick="@(d => DeleteBookAsync(book.ISBN))">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        }
+
+
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Author> _authors;
+    private string _filterByAuthor="";
+    private string _filterByBookTitle="";
+    
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _authors = await _authorService.GetAuthorsAsync();
+        StateHasChanged();
+        
+    }
+
+    private bool Filter(Author author, Book book)
+    {
+        
+        if (_filterByAuthor.Equals("") || ($"{author.FirstName} {author.LastName}".Contains(_filterByAuthor)))
+        {
+            if (_filterByBookTitle.Equals(""))
+            {
+                return true;
+            }
+            if (book.Title.Contains(_filterByBookTitle))
+            {
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+            
+            
+    }
+    
+    private void UpdateAuthorFilter(ChangeEventArgs e)
+    {
+        _filterByAuthor = e.Value.ToString();
+        StateHasChanged();
+    }
+
+    private void UpdateBookFilter(ChangeEventArgs e)
+    {
+        _filterByBookTitle = e.Value.ToString();
+        StateHasChanged();
+    }
+    
+
+    private async Task DeleteBookAsync(int isbn)
+    {
+        await _bookService.DeleteBookAsync(isbn);
+        _authors = await _authorService.GetAuthorsAsync();
+        StateHasChanged();
+    }
+
+}

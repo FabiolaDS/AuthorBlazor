@@ -1,0 +1,87 @@
+﻿@page "/AddBook"
+@using Microsoft.AspNetCore.Components
+@using AuthorBlazor.Model
+@using AuthorBlazor.Service
+
+@inject IAuthorService _authorService
+@inject IBookService _bookService
+@inject NavigationManager NavigationManager
+<h3>AddBook</h3>
+
+
+<EditForm Model="@_newBook" OnValidSubmit="@SaveBookAsync">
+    <div class="form-group">
+        ISBN: <br/>
+        <InputNumber @bind-Value="_newBook.ISBN"/>
+
+    </div>
+
+    <div class="form-group">
+       Title : <br/>
+        <InputText @bind-Value="_newBook.Title"/>
+    </div>
+
+    <div class="form-group">
+        Publication Year : <br/>
+        <InputNumber @bind-Value="_newBook.PublicationYear"/>
+    </div>
+
+    <div class="form-group">
+        Number Of Pages : <br/>
+        <InputNumber @bind-Value="_newBook.NumOfPages"/>
+    </div>
+
+    <div class="form-group">
+       Genre : <br/>
+        <InputText @bind-Value="_newBook.Genre"/>
+    </div>
+    <div>
+        Author: <br/>
+
+        @if (_authors == null)
+        {
+            <p> Loading authors...</p>
+        }
+        else
+        {
+            <InputSelect @bind-Value="_authorId">
+                @foreach (var author in _authors)
+                {
+                    <option value="@author.Id">
+                        @author.FirstName @author.LastName
+                    </option>
+                }
+
+
+
+            </InputSelect>
+        }
+    </div>
+
+
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+
+    <p class="actions">
+        <button class="btn btn-outline-dark" type="submit">Create</button>
+    </p>
+</EditForm>
+
+@code {
+    private Book _newBook = new Book();
+    private int _authorId;
+    private List<Author> _authors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _authors = await _authorService.GetAuthorsAsync();
+        StateHasChanged();
+    }
+
+    private async Task SaveBookAsync()
+    {
+        await _bookService.SaveBookAsync(_newBook,_authorId);
+        NavigationManager.NavigateTo("/books");
+    }
+
+}
